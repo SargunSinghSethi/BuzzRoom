@@ -14,7 +14,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "../ui/dialog";
+} from "@/components/ui/dialog";
 
 import {
     Form,
@@ -23,11 +23,11 @@ import {
     FormLabel,
     FormItem,
     FormMessage,
-} from "../ui/form";
+} from "@/components/ui/form";
 
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { FileUpload } from "../file-upload";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { FileUpload } from "@/components/file-upload";
 
 const formSchema = z.object({
     name: z.string().min(1, {
