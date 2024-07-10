@@ -1,11 +1,15 @@
 "use client";
 
 import { Fragment } from "react";
+import { format } from "date-fns";
 import { Member, Message, Profile } from "@prisma/client";
 import { Loader2, ServerCrash } from "lucide-react";
 
 import { useChatQuery } from "@/hooks/use-chat-query";
 import { ChatWelcome } from "./chat-welcome";
+import { ChatItem } from "./chat-item";
+
+const DATE_FORMAT = "d MMM yyyy, HH:mm";
 
 type MessageWithMemberWithProfile = Message & {
     member: Member & {
@@ -84,9 +88,19 @@ export const ChatMessages = ({
                 {data?.pages?.map((group, i) => (
                     <Fragment key={i}>
                         {group.items.map((message: MessageWithMemberWithProfile) => (
-                            <div key={message.id}>
-                                {message.content}
-                            </div>
+                            <ChatItem
+                                key={message.id}
+                                id={message.id}
+                                content={message.content}
+                                member={message.member}
+                                currentMember={member}
+                                fileUrl={message.fileUrl}
+                                deleted={message.deleted}
+                                timeStamp={format(new Date(message.createdAt),DATE_FORMAT)}
+                                isUpdated={message.updatedAt !== message.createdAt}
+                                socketUrl={apiUrl}
+                                SockerQuery={socketQuery}
+                            />
                         ))}
                     </Fragment>
                 ))}
