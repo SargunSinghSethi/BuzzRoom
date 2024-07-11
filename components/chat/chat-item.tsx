@@ -11,6 +11,7 @@ import { ActionTooltip } from "@/components/action-tooltip";
 import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import {useRouter, useParams} from "next/navigation";
 import { cn } from "@/lib/utils";
 
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useModal } from "@/hooks/use-modal-store";
 
 interface ChatItemProps {
     id: string;
@@ -34,7 +36,7 @@ interface ChatItemProps {
     currentMember: Member;
     isUpdated: boolean;
     socketUrl: string;
-    SockerQuery: Record<string, string>;
+    SocketQuery: Record<string, string>;
 }
 
 const roleIconMap = {
@@ -57,22 +59,29 @@ export const ChatItem = ({
     currentMember,
     isUpdated,
     socketUrl,
-    SockerQuery,
+    SocketQuery,
 }: ChatItemProps) => {
     const [isEditing, setIsEditing] = useState(false);
-    const [isDeleted, setIsDeleted] = useState(false);
+    const { onOpen } = useModal();
+    const params = useParams();
+    const router = useRouter();
+
+    const onMemberClick = () => {
+        if(member.id === currentMember.id) return;
+        router.push(`/servers/${params?.serverId}/conversations/${member.id}`);
+    }
 
     useEffect(() => {
         const handelKeyDown = (event: any) => {
-            if(event.key === "Escape" || event.keyCode === 27) {
+            if (event.key === "Escape" || event.keyCode === 27) {
                 setIsEditing(false);
-            } 
+            }
         };
 
         window.addEventListener("keydown", handelKeyDown);
 
         return () => window.removeEventListener("keydown", handelKeyDown);
-    },[])
+    }, [])
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -81,8 +90,20 @@ export const ChatItem = ({
         }
     });
 
-    const onSubmit = (values) => {
-        console.log(values);
+    const isLoading = form.formState.isSubmitting;
+
+    const onSubmit = async (values: z.infer<typeof formSchema>) => {
+        try {
+            const url = qs.stringifyUrl({
+                url: `${socketUrl}/${id}`,
+                query: SocketQuery,
+            });
+            await axios.patch(url, values);
+            form.reset();
+            setIsEditing(false);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     useEffect(() => {
@@ -104,7 +125,7 @@ export const ChatItem = ({
     return (
         <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
             <div className="group flex gap-x-2 items-start w-full">
-                <div className="cursor-pointer hover:drop-shadow-md transition">
+                <div onClick={onMemberClick} className="cursor-pointer hover:drop-shadow-md transition">
                     <UserAvatar
                         src={member.profile.ImageUrl}
                     />
@@ -112,7 +133,7 @@ export const ChatItem = ({
                 <div className="flex flex-col w-full">
                     <div className="flex items-center gap-x-2">
                         <div className="flex items-center">
-                            <p className="font-semibold text-sm hover:underline cursor-pointer">
+                            <p onClick={onMemberClick} className="font-semibold text-sm hover:underline cursor-pointer">
                                 {member.profile.name}
                             </p>
                             <ActionTooltip label={member.role}>
@@ -169,6 +190,7 @@ export const ChatItem = ({
                     {!fileUrl && isEditing && (
                         <Form {...form}>
                             <form
+                                autoComplete="off"
                                 className="flex items-center w-full gap-x-2 pt-2"
                                 onSubmit={form.handleSubmit(onSubmit)}
                             >
@@ -180,6 +202,8 @@ export const ChatItem = ({
                                             <FormControl>
                                                 <div className="relative w-full">
                                                     <Input
+
+                                                        disabled={isLoading}
                                                         className="p-2 bg-zinc-200/90 dark:bg-zinc-700/75 border-0 border-none
                                                 focus-visible:ring-0 focus-visible:ring-offset-0 text-zinc-600 dark:text-zinc-200"
                                                         placeholder="Edited Message"
@@ -190,7 +214,7 @@ export const ChatItem = ({
                                         </FormItem>
                                     )}
                                 />
-                                <Button size="sm" variant="primary" >
+                                <Button disabled={isLoading} size="sm" variant="primary" >
                                     Save
                                 </Button>
                             </form>
@@ -214,6 +238,10 @@ export const ChatItem = ({
                     )}
                     <ActionTooltip label="Delete">
                         <Trash
+                            onClick={() => onOpen("deleteMessage",{
+                                apiUrl: `${socketUrl}/${id}`,
+                                query: SocketQuery
+                            })}
                             className="cursor-pointer ml-auto w-4 h-4 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
                         />
                     </ActionTooltip>
