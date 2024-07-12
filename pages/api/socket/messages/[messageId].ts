@@ -23,9 +23,7 @@ export default async function handler(
         if(!serverId) return res.status(400).json({ error: "Server ID Missing"});
         
         if(!channelId) return res.status(400).json({ error: "Channel ID Missing"});
-        
-        if(!messageId) return res.status(400).json({ error: "Message ID Missing"});
-        
+                
         const server = await db.server.findFirst({
             where: {
                 id: serverId as string,
@@ -59,7 +57,6 @@ export default async function handler(
             where: {
                 id: messageId as string,
                 channelId: channelId as string,
-                memberId: member.id as string, 
             },
             include: {
                 member: {
