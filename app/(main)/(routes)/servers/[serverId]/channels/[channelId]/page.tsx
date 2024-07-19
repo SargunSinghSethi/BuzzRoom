@@ -78,6 +78,7 @@ const ChannelIdPage = async ({
                 chatId={channel.id}
                 audio={true}
                 video={false}
+                serverId={params.serverId}
                 />
             )}
             {channel.type === ChannelType.VIDEO && (
@@ -85,6 +86,7 @@ const ChannelIdPage = async ({
                 chatId={channel.id}
                 audio={false}
                 video={true}
+                serverId={params.serverId}
                 />
             )}
         </div>
